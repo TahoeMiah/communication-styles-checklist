@@ -16,50 +16,30 @@
   --text: #111;
   --muted: #444;
 }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Georgia, 'Times New Roman', serif;
-  line-height: 1.45;
-}
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Georgia, 'Times New Roman', serif; line-height: 1.45; }
 .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
 h1 { font-size: 28px; margin-bottom: 12px; }
 p.lead { color: var(--muted); font-size: 15px; margin-bottom: 18px; }
 .controls { display: flex; gap: 10px; margin-bottom: 18px; }
-button {
-  appearance: none; border: 1px solid var(--border); background: white;
-  padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
+button { appearance: none; border: 1px solid var(--border); background: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 button:hover { background: #f0f0f0; }
 .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; gap: 18px; } }
-h2 { color: var(--blue); margin-top: 28px; margin-bottom: 10px; font-size: 20px; page-break-before: always; }
-.card {
-  border: 1px solid var(--border); border-radius: 8px; background: white; padding: 10px 14px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  page-break-inside: avoid !important; break-inside: avoid !important;
-}
+.section-title { color: var(--blue); margin-top: 20px; margin-bottom: 10px; font-size: 20px; }
+.section { break-after: page; page-break-after: always; padding-top: 8px; }
+.section:last-of-type { break-after: auto; page-break-after: auto; }
+.card { border: 1px solid var(--border); border-radius: 8px; background: white; padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); page-break-inside: avoid !important; break-inside: avoid !important; }
 .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
 .count { border: 1px solid var(--border); border-radius: 999px; padding: 1px 6px; font-size: 12px; }
 ul.list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
-.trait {
-  display: grid; grid-template-columns: 22px 1fr; gap: 6px; align-items: start;
-  page-break-inside: avoid !important; break-inside: avoid !important;
-}
-input[type="checkbox"] {
-  width: 18px; height: 18px; accent-color: var(--blue); flex-shrink: 0;
-}
+.trait { display: grid; grid-template-columns: 22px 1fr; gap: 6px; align-items: start; page-break-inside: avoid !important; break-inside: avoid !important; }
+input[type="checkbox"] { width: 18px; height: 18px; min-width: 18px; min-height: 18px; accent-color: var(--blue); flex-shrink: 0; margin-top: 2px; }
 label { cursor: pointer; }
-.results {
-  border: 1px solid var(--border); border-radius: 8px; background: white; padding: 10px 14px;
-  margin-top: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  page-break-inside: avoid !important; break-inside: avoid !important;
-}
+.results { border: 1px solid var(--border); border-radius: 8px; background: white; padding: 10px 14px; margin-top: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); page-break-inside: avoid !important; break-inside: avoid !important; }
 .results-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
 @media (min-width: 700px) { .results-grid { grid-template-columns: 1fr 1fr; } }
 .scoreline { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--border); padding: 3px 0; }
+.pdf-mode .no-print { display: none !important; }
 @media print { .no-print { display: none !important; } }
 </style>
 </head>
@@ -67,7 +47,7 @@ label { cursor: pointer; }
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useMemo, useEffect } = React;
-const STORAGE_KEY = "comm-styles-checklist-v4";
+const STORAGE_KEY = "comm-styles-checklist-v6";
 const STYLES = [
   { key: "relator", title: "Relator", work: [
     "Seeks alignment between personal and organizational values.","Are excellent communicators.","Makes people feel valued and cared for.",
@@ -162,10 +142,21 @@ function App() {
   const handleToggle = (style,item)=>setAnswers(p=>({...p,[style]:{...p[style],[item]:!p[style]?.[item]}}));
   const handleReset=()=>setAnswers(emptyAnswers);
   const handleSavePDF=()=>{
-    const element=document.querySelector("#pdf-root");
-    const opt={margin:0.5,filename:"Communication_Styles_Checklist.pdf",pagebreak:{mode:["avoid-all","css","legacy"]},
-      image:{type:"jpeg",quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:"in",format:"letter",orientation:"portrait"}};
-    html2pdf().set(opt).from(element).save();
+    const root=document.getElementById('pdf-root');
+    document.body.classList.add('pdf-mode');
+    const opt={
+      margin:0.5,
+      filename:"Communication_Styles_Checklist.pdf",
+      pagebreak:{ mode:["avoid-all","css","legacy"] },
+      image:{type:"jpeg",quality:0.98},
+      html2canvas:{scale:2,useCORS:true},
+      jsPDF:{unit:"in",format:"letter",orientation:"portrait"}
+    };
+    html2pdf().set(opt).from(root).save().then(()=>{
+      document.body.classList.remove('pdf-mode');
+    }).catch(()=>{
+      document.body.classList.remove('pdf-mode');
+    });
   };
   return (
     <div className="container" id="pdf-root">
@@ -176,8 +167,8 @@ function App() {
         <button onClick={handleSavePDF}>Save as PDF</button>
       </div>
       {STYLES.map(s=>(
-        <div key={s.key}>
-          <h2>{s.title}</h2>
+        <div className="section" key={s.key}>
+          <div className="section-title">{s.title}</div>
           <div className="grid">
             <Section title="Communication Style at Work" items={s.work} styleKey={s.key} answers={answers} onToggle={handleToggle}/>
             <Section title="Personality & Behaviors" items={s.behavior} styleKey={s.key} answers={answers} onToggle={handleToggle}/>
@@ -185,7 +176,7 @@ function App() {
         </div>
       ))}
       <div className="results">
-        <h2>Your Results</h2>
+        <div className="section-title" style="margin-top:0">Your Results</div>
         <div className="results-grid">
           <div className="scoreline"><span>Relator</span><span>{totals.relator.v} / {totals.relator.m}</span></div>
           <div className="scoreline"><span>Analyzer</span><span>{totals.analyzer.v} / {totals.analyzer.m}</span></div>

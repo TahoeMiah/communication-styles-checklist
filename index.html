@@ -4,9 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Communication Styles Interactive Checklist</title>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root {
@@ -44,10 +41,18 @@ label { cursor: pointer; }
 </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const { useState, useMemo, useEffect } = React;
-const STORAGE_KEY = "comm-styles-checklist-v6";
+<div class="container" id="pdf-root">
+  <h1>Communication Styles Interactive Checklist</h1>
+  <p class="lead">Select the traits that fit you. Don’t overthink your responses. Skip anything that doesn’t resonate. You may have almost all boxes checked in one section and only a few in another. You may find you have two sections that dominate.</p>
+  <div class="controls no-print">
+    <button id="reset">Reset</button>
+    <button id="save">Save as PDF</button>
+  </div>
+  <div id="sections"></div>
+  <div class="results" id="results"></div>
+</div>
+<script>
+const STORAGE_KEY = "comm-styles-checklist-final";
 const STYLES = [
   { key: "relator", title: "Relator", work: [
     "Seeks alignment between personal and organizational values.","Are excellent communicators.","Makes people feel valued and cared for.",
@@ -100,99 +105,69 @@ const STYLES = [
     "Uses intuition.","Tends to discount details as unnecessary.","Frequent eye-contact while listening.",
     "Pays attention to a speaker’s emotional energy while listening.","Energy: extroverted, excited."] }
 ];
-function usePersistentState(key, initial) {
-  const [state, setState] = useState(() => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : initial; } catch { return initial; } });
-  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }, [key, state]);
-  return [state, setState];
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
 }
-function Section({ title, items, styleKey, answers, onToggle }) {
-  const checkedCount = items.filter(i => answers[styleKey]?.[i]).length;
-  return (
-    <div className="card">
-      <div className="row"><h3>{title}</h3><div className="count">{checkedCount} / {items.length}</div></div>
-      <ul className="list">
-        {items.map((item, idx) => {
-          const id = `${styleKey}-${title}-${idx}`;
-          const checked = !!answers[styleKey]?.[item];
-          return (
-            <li key={id} className="trait">
-              <input id={id} type="checkbox" checked={checked} onChange={() => onToggle(styleKey, item)} />
-              <label htmlFor={id}>{item}</label>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-function App() {
-  const emptyAnswers = useMemo(() => {
-    const base = {}; STYLES.forEach(s => { base[s.key] = {}; [...s.work, ...s.behavior].forEach(i => base[s.key][i] = false); }); return base;
-  }, []);
-  const [answers, setAnswers] = usePersistentState(STORAGE_KEY, emptyAnswers);
-  const totals = useMemo(() => {
-    const t = { relator:{v:0,m:0}, analyzer:{v:0,m:0}, boss:{v:0,m:0}, dreamer:{v:0,m:0} };
-    STYLES.forEach(s => { const all = [...s.work, ...s.behavior]; const val = all.filter(i => answers[s.key]?.[i]).length; t[s.key]={v:val,m:all.length}; });
-    return t;
-  }, [answers]);
-  const dominant = useMemo(() => {
-    const entries = Object.entries(totals); const top = Math.max(...entries.map(([_,v])=>v.v));
-    return entries.filter(([_,v])=>v.v===top && top>0).map(([k])=>k);
-  }, [totals]);
-  const handleToggle = (style,item)=>setAnswers(p=>({...p,[style]:{...p[style],[item]:!p[style]?.[item]}}));
-  const handleReset=()=>setAnswers(emptyAnswers);
-  const handleSavePDF=()=>{
-    const root=document.getElementById('pdf-root');
-    document.body.classList.add('pdf-mode');
-    const opt={
-      margin:0.5,
-      filename:"Communication_Styles_Checklist.pdf",
-      pagebreak:{ mode:["avoid-all","css","legacy"] },
-      image:{type:"jpeg",quality:0.98},
-      html2canvas:{scale:2,useCORS:true},
-      jsPDF:{unit:"in",format:"letter",orientation:"portrait"}
-    };
-    html2pdf().set(opt).from(root).save().then(()=>{
-      document.body.classList.remove('pdf-mode');
-    }).catch(()=>{
-      document.body.classList.remove('pdf-mode');
+function saveState(state) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function render() {
+  const state = loadState();
+  const container = document.getElementById("sections");
+  container.innerHTML = "";
+  STYLES.forEach(s => {
+    const section = document.createElement("div");
+    section.className = "section";
+    section.innerHTML = `<div class='section-title'>${s.title}</div>`;
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    [ ["Communication Style at Work", s.work], ["Personality & Behaviors", s.behavior] ].forEach(([title, list]) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const count = list.filter(i => state[s.key]?.[i]).length;
+      card.innerHTML = `<div class='row'><h3>${title}</h3><div class='count'>${count} / ${list.length}</div></div>`;
+      const ul = document.createElement("ul");
+      ul.className = "list";
+      list.forEach((item,i)=>{
+        const li = document.createElement("li");
+        li.className = "trait";
+        const id = `${s.key}-${title}-${i}`;
+        const checked = state[s.key]?.[item] || false;
+        li.innerHTML = `<input type='checkbox' id='${id}' ${checked?"checked":""}><label for='${id}'>${item}</label>`;
+        ul.appendChild(li);
+        li.querySelector("input").addEventListener("change",()=>{
+          state[s.key]=state[s.key]||{};
+          state[s.key][item]=!state[s.key][item];
+          saveState(state); render();
+        });
+      });
+      card.appendChild(ul); grid.appendChild(card);
     });
-  };
-  return (
-    <div className="container" id="pdf-root">
-      <h1>Communication Styles Interactive Checklist</h1>
-      <p className="lead">Select the traits that fit you. Don’t overthink your responses. Skip anything that doesn’t resonate. You may have almost all boxes checked in one section and only a few in another. You may find you have two sections that dominate.</p>
-      <div className="controls no-print">
-        <button onClick={handleReset}>Reset</button>
-        <button onClick={handleSavePDF}>Save as PDF</button>
-      </div>
-      {STYLES.map(s=>(
-        <div className="section" key={s.key}>
-          <div className="section-title">{s.title}</div>
-          <div className="grid">
-            <Section title="Communication Style at Work" items={s.work} styleKey={s.key} answers={answers} onToggle={handleToggle}/>
-            <Section title="Personality & Behaviors" items={s.behavior} styleKey={s.key} answers={answers} onToggle={handleToggle}/>
-          </div>
-        </div>
-      ))}
-      <div className="results">
-        <div className="section-title" style="margin-top:0">Your Results</div>
-        <div className="results-grid">
-          <div className="scoreline"><span>Relator</span><span>{totals.relator.v} / {totals.relator.m}</span></div>
-          <div className="scoreline"><span>Analyzer</span><span>{totals.analyzer.v} / {totals.analyzer.m}</span></div>
-          <div className="scoreline"><span>Boss Driver</span><span>{totals.boss.v} / {totals.boss.m}</span></div>
-          <div className="scoreline"><span>Dreamer Motivator</span><span>{totals.dreamer.v} / {totals.dreamer.m}</span></div>
-        </div>
-        <div style={{marginTop:8}}>
-          <strong>Dominant Styles:</strong>
-          {dominant.length===0?<span className="muted"> No selections yet.</span>:
-            <ul style={{margin:"4px 0 0 16px"}}>{dominant.map(d=><li key={d}>{STYLES.find(s=>s.key===d)?.title}</li>)}</ul>}
-        </div>
-      </div>
-    </div>
-  );
+    section.appendChild(grid); container.appendChild(section);
+  });
+  renderResults();
 }
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+function renderResults() {
+  const state = loadState();
+  const results = document.getElementById("results");
+  const totals = {}; STYLES.forEach(s=>{ const all=[...s.work,...s.behavior]; const val=all.filter(i=>state[s.key]?.[i]).length; totals[s.key]={v:val,m:all.length}; });
+  const top = Math.max(...Object.values(totals).map(v=>v.v));
+  const dominant = Object.entries(totals).filter(([_,v])=>v.v===top && top>0).map(([k])=>STYLES.find(s=>s.key===k).title);
+  results.innerHTML = `<div class='section-title' style='margin-top:0'>Your Results</div>
+  <div class='results-grid'>
+    <div class='scoreline'><span>Relator</span><span>${totals.relator.v} / ${totals.relator.m}</span></div>
+    <div class='scoreline'><span>Analyzer</span><span>${totals.analyzer.v} / ${totals.analyzer.m}</span></div>
+    <div class='scoreline'><span>Boss Driver</span><span>${totals.boss.v} / ${totals.boss.m}</span></div>
+    <div class='scoreline'><span>Dreamer Motivator</span><span>${totals.dreamer.v} / ${totals.dreamer.m}</span></div>
+  </div>
+  <div style='margin-top:8px'><strong>Dominant Styles:</strong>${dominant.length?("<ul style='margin:4px 0 0 16px'>"+dominant.map(d=>"<li>"+d+"</li>").join("")+"</ul>"):" <span class='muted'>No selections yet.</span>"}</div>`;
+}
+document.getElementById("reset").addEventListener("click",()=>{localStorage.removeItem(STORAGE_KEY);render();});
+document.getElementById("save").addEventListener("click",()=>{
+  document.body.classList.add("pdf-mode");
+  const opt={margin:0.5,filename:"Communication_Styles_Checklist.pdf",pagebreak:{mode:["avoid-all","css","legacy"]},
+    image:{type:"jpeg",quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:"in",format:"letter",orientation:"portrait"}};
+  html2pdf().set(opt).from(document.getElementById("pdf-root")).save().then(()=>document.body.classList.remove("pdf-mode"));
+});
+render();
 </script>
 </body>
 </html>

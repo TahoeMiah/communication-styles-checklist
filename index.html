@@ -1,341 +1,362 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Communication Styles — Interactive Checklist</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-      body { background: #f9fafb; color: #0f172a; }
-      @media print {
-        .print\:hidden { display: none !important; }
-        .print\:border-none { border: none !important; }
-        .print\:shadow-none { box-shadow: none !important; }
-        .print\:mb-2 { margin-bottom: .5rem !important; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Communication Styles Interactive Checklist</title>
+  <!-- React (UMD) + Babel to run JSX directly in the browser -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- html2pdf for true PDF download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    /* ===== Minimal black-and-white layout ===== */
+    :root {
+      --text: #000;
+      --muted: #222;
+      --line: #000;
+      --bg: #fff;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .container { max-width: 980px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 12px; font-size: 28px; line-height: 1.2; font-weight: 700; }
+    h2 { margin: 16px 0 8px; font-size: 20px; line-height: 1.3; }
+    h3 { margin: 0 0 8px; font-size: 16px; }
+    p.lead { margin: 6px 0 18px; color: var(--muted); }
+    .controls { display: flex; gap: 8px; margin: 0 0 16px; }
+    button { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--text); padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+    button:active { transform: translateY(1px); }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+    .card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: #fff; }
+    .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .count { border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; font-size: 12px; white-space: nowrap; }
+    ul.list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+    .trait { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; }
+    input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; }
+    .results { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: #fff; }
+    .results-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width: 700px) { .results-grid { grid-template-columns: 1fr 1fr; } }
+    .scoreline { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding: 4px 0; }
+    .muted { color: var(--muted); }
+    footer { margin-top: 18px; font-size: 12px; color: var(--muted); }
+    /* print cleanup */
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
 
-    <script type="text/babel">
-      const { useEffect, useMemo, useState } = React;
+  <script type="text/babel">
+    const { useMemo, useState, useEffect } = React;
 
-      const STYLES = [
-        {
-          key: "relator",
-          title: "Relator",
-          work: [
-            "Seeks alignment between personal and organizational values.",
-            "Are excellent communicators.",
-            "Makes people feel valued and cared for.",
-            "Creates a sense of community within an organization.",
-            "Works well with staff members who support and cooperate with each other.",
-            "Has difficulty tolerating inconsiderate people.",
-            "Likes making a personal connection with people.",
-            "Strives to bring harmony to any situation.",
-            "Will focus on feelings first.",
-            "Are sometimes too sensitive and worry about what other people will think of them.",
-            "Communication strength is active listening.",
-            "Believes people are an organization’s best asset.",
-          ],
-          behavior: [
-            "Easy-going, placid, amiable.",
-            "Steady, reserved, low-key.",
-            "Limited gestures, smooth and gentle.",
-            "Eyes sometimes averted while listening attentively.",
-            "Accepting, observant manner — indirect.",
-            "Uses feeling language.",
-            "Talks about personal experiences.",
-            "Speech: slow, liquid, tentative; uses questioning tone in statements.",
-            "May seem vague and unclear about what is wanted.",
-            "Tends to lean away from the speaker.",
-            "Waits for others to lead, then responds.",
-            "Pays attention to a speaker’s emotional tone and non-verbal communication.",
-            "Energy: introverted, quiet.",
-          ],
-        },
-        {
-          key: "analyzer",
-          title: "Analyzer",
-          work: [
-            "Seeks alignment between people and organizational procedures.",
-            "Works to enhance an organization’s reputation.",
-            "Are rational and logical when working with people.",
-            "Gives people the information and knowledge they need.",
-            "Are experts in their field.",
-            "Try to be as accurate as possible.",
-            "Works well with staff who follow through and are well-organized.",
-            "Have difficulty tolerating people who act without a rational basis.",
-            "Are sometimes too detached and impersonal.",
-            "Will focus on information first.",
-            "Communication strength is precision in words and information.",
-            "Believes planning is an organization’s best asset.",
-          ],
-          behavior: [
-            "Serious, reserved.",
-            "Quiet, observant, cautious, inquisitive.",
-            "May seem distant, tense, formal.",
-            "Closed gestures (e.g., hands folded, pointed).",
-            "Limited range in voice tone.",
-            "Infrequent eye contact while listening.",
-            "Cautious about revealing personal reactions.",
-            "Talks about facts and data.",
-            "Speech: deliberate, studied, slow.",
-            "Uses little or no small talk.",
-            "May seem watchful or preoccupied.",
-            "Asks in-depth questions.",
-            "Needs time to think before responding.",
-            "Gathers all information before making a decision.",
-            "May seem critical.",
-            "Pays attention to a speaker’s words and information.",
-            "Energy: introverted, reflective.",
-          ],
-        },
-        {
-          key: "boss",
-          title: "Boss Driver",
-          work: [
-            "Seeks alignment between goals and output in an organization.",
-            "Works hard to make the organization productive.",
-            "Are goal-oriented when working with people.",
-            "Gives people the product or skills they need.",
-            "Can get a lot of things done in a short amount of time.",
-            "Works well with staff who are task-oriented and act quickly.",
-            "Have difficulty tolerating people who are slow in making decisions.",
-            "Are sometimes too impulsive in their actions.",
-            "Thrives on plans and time-lines.",
-            "Will focus on actions first.",
-            "Enjoys solving difficult problems.",
-            "Communication strength is directness.",
-            "Believes productivity is an organization’s best asset.",
-          ],
-          behavior: [
-            "Strong, dominating.",
-            "Fast-paced, business-like, confident.",
-            "Directive tone of voice.",
-            "May seem controlling.",
-            "Speech: sharp, quick, efficient.",
-            "Restless gestures and movement.",
-            "Leans forward to make a point.",
-            "Authoritative manner.",
-            "Makes statements more often than questions.",
-            "Talks about the bottom line.",
-            "Solution-oriented and action-oriented.",
-            "Expects a response immediately.",
-            "May seem to override others.",
-            "Uses achievement-oriented language.",
-            "Reacts immediately to a given situation.",
-            "Pays attention to a speaker’s words and action plan.",
-            "Energy: extroverted, direct.",
-          ],
-        },
-        {
-          key: "dreamer",
-          title: "Dreamer Motivator",
-          work: [
-            "Seeks alignment between what is and what might be in an organization.",
-            "Explores possibilities when working with people.",
-            "Makes people feel energized and excited.",
-            "Works well with staff who are quick both in thought and action.",
-            "Are highly intuitive in making decisions.",
-            "Have difficulty tolerating people who can’t see what needs to be done.",
-            "Likes sharing their enthusiasm with people.",
-            "Have a vision for the organization’s future.",
-            "Will focus on ideas first.",
-            "Are sometimes too scattered and volatile.",
-            "Communication strength is articulating the big picture and sharing the vision.",
-            "Believes creativity is an organization’s best asset.",
-          ],
-          behavior: [
-            "Outgoing, bubbly.",
-            "Enthusiastic, spontaneous, responsive.",
-            "Animated expressions (smiles, nods, frowns).",
-            "Speech: colorful, dramatic.",
-            "Open gestures (e.g., hands free, palms up).",
-            "Friendly, fun manner.",
-            "May seem flighty and disorganized.",
-            "Shares personal feelings freely.",
-            "Responds enthusiastically.",
-            "Wants collaboration and reactions from others.",
-            "Paints pictures with words.",
-            "Uses intuition.",
-            "Tends to discount details as unnecessary.",
-            "Frequent eye-contact while listening.",
-            "Pays attention to a speaker’s emotional energy while listening.",
-            "Energy: extroverted, excited.",
-          ],
-        },
-      ];
+    const STYLES = [
+      {
+        key: "relator",
+        title: "Relator",
+        work: [
+          "Seeks alignment between personal and organizational values.",
+          "Are excellent communicators.",
+          "Makes people feel valued and cared for.",
+          "Creates a sense of community within an organization.",
+          "Works well with staff members who support and cooperate with each other.",
+          "Has difficulty tolerating inconsiderate people.",
+          "Likes making a personal connection with people.",
+          "Strives to bring harmony to any situation.",
+          "Will focus on feelings first.",
+          "Are sometimes too sensitive and worry about what other people will think of them.",
+          "Communication strength is active listening.",
+          "Believes people are an organization’s best asset.",
+        ],
+        behavior: [
+          "Easy-going, placid, amiable.",
+          "Steady, reserved, low-key.",
+          "Limited gestures, smooth and gentle.",
+          "Eyes sometimes averted while listening attentively.",
+          "Accepting, observant manner — indirect.",
+          "Uses feeling language.",
+          "Talks about personal experiences.",
+          "Speech: slow, liquid, tentative; uses questioning tone in statements.",
+          "May seem vague and unclear about what is wanted.",
+          "Tends to lean away from the speaker.",
+          "Waits for others to lead, then responds.",
+          "Pays attention to a speaker’s emotional tone and non-verbal communication.",
+          "Energy: introverted, quiet.",
+        ],
+      },
+      {
+        key: "analyzer",
+        title: "Analyzer",
+        work: [
+          "Seeks alignment between people and organizational procedures.",
+          "Works to enhance an organization’s reputation.",
+          "Are rational and logical when working with people.",
+          "Gives people the information and knowledge they need.",
+          "Are experts in their field.",
+          "Try to be as accurate as possible.",
+          "Works well with staff who follow through and are well-organized.",
+          "Have difficulty tolerating people who act without a rational basis.",
+          "Are sometimes too detached and impersonal.",
+          "Will focus on information first.",
+          "Communication strength is precision in words and information.",
+          "Believes planning is an organization’s best asset.",
+        ],
+        behavior: [
+          "Serious, reserved.",
+          "Quiet, observant, cautious, inquisitive.",
+          "May seem distant, tense, formal.",
+          "Closed gestures (e.g., hands folded, pointed).",
+          "Limited range in voice tone.",
+          "Infrequent eye contact while listening.",
+          "Cautious about revealing personal reactions.",
+          "Talks about facts and data.",
+          "Speech: deliberate, studied, slow.",
+          "Uses little or no small talk.",
+          "May seem watchful or preoccupied.",
+          "Asks in-depth questions.",
+          "Needs time to think before responding.",
+          "Gathers all information before making a decision.",
+          "May seem critical.",
+          "Pays attention to a speaker’s words and information.",
+          "Energy: introverted, reflective.",
+        ],
+      },
+      {
+        key: "boss",
+        title: "Boss Driver",
+        work: [
+          "Seeks alignment between goals and output in an organization.",
+          "Works hard to make the organization productive.",
+          "Are goal-oriented when working with people.",
+          "Gives people the product or skills they need.",
+          "Can get a lot of things done in a short amount of time.",
+          "Works well with staff who are task-oriented and act quickly.",
+          "Have difficulty tolerating people who are slow in making decisions.",
+          "Are sometimes too impulsive in their actions.",
+          "Thrives on plans and time-lines.",
+          "Will focus on actions first.",
+          "Enjoys solving difficult problems.",
+          "Communication strength is directness.",
+          "Believes productivity is an organization’s best asset.",
+        ],
+        behavior: [
+          "Strong, dominating.",
+          "Fast-paced, business-like, confident.",
+          "Directive tone of voice.",
+          "May seem controlling.",
+          "Speech: sharp, quick, efficient.",
+          "Restless gestures and movement.",
+          "Leans forward to make a point.",
+          "Authoritative manner.",
+          "Makes statements more often than questions.",
+          "Talks about the bottom line.",
+          "Solution-oriented and action-oriented.",
+          "Expects a response immediately.",
+          "May seem to override others.",
+          "Uses achievement-oriented language.",
+          "Reacts immediately to a given situation.",
+          "Pays attention to a speaker’s words and action plan.",
+          "Energy: extroverted, direct.",
+        ],
+      },
+      {
+        key: "dreamer",
+        title: "Dreamer Motivator",
+        work: [
+          "Seeks alignment between what is and what might be in an organization.",
+          "Explores possibilities when working with people.",
+          "Makes people feel energized and excited.",
+          "Works well with staff who are quick both in thought and action.",
+          "Are highly intuitive in making decisions.",
+          "Have difficulty tolerating people who can’t see what needs to be done.",
+          "Likes sharing their enthusiasm with people.",
+          "Have a vision for the organization’s future.",
+          "Will focus on ideas first.",
+          "Are sometimes too scattered and volatile.",
+          "Communication strength is articulating the big picture and sharing the vision.",
+          "Believes creativity is an organization’s best asset.",
+        ],
+        behavior: [
+          "Outgoing, bubbly.",
+          "Enthusiastic, spontaneous, responsive.",
+          "Animated expressions (smiles, nods, frowns).",
+          "Speech: colorful, dramatic.",
+          "Open gestures (e.g., hands free, palms up).",
+          "Friendly, fun manner.",
+          "May seem flighty and disorganized.",
+          "Shares personal feelings freely.",
+          "Responds enthusiastically.",
+          "Wants collaboration and reactions from others.",
+          "Paints pictures with words.",
+          "Uses intuition.",
+          "Tends to discount details as unnecessary.",
+          "Frequent eye-contact while listening.",
+          "Pays attention to a speaker’s emotional energy while listening.",
+          "Energy: extroverted, excited.",
+        ],
+      },
+    ];
 
-      const STORAGE_KEY = "comm-styles-checklist-v1";
+    const STORAGE_KEY = "comm-styles-checklist-v2";
 
-      function usePersistentState(key, initial) {
-        const [state, setState] = React.useState(() => {
-          try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : initial; }
-          catch { return initial; }
+    function usePersistentState(key, initial) {
+      const [state, setState] = useState(() => {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : initial;
+        } catch { return initial; }
+      });
+      useEffect(() => {
+        try { localStorage.setItem(key, JSON.stringify(state)); } catch {}
+      }, [key, state]);
+      return [state, setState];
+    }
+
+    function Section({ title, items, styleKey, answers, onToggle }) {
+      const checkedCount = items.filter((i) => answers[styleKey]?.[i]).length;
+      return (
+        <div className="card">
+          <div className="row">
+            <h3>{title}</h3>
+            <div className="count">{checkedCount} / {items.length}</div>
+          </div>
+          <ul className="list">
+            {items.map((item, idx) => {
+              const id = `${styleKey}-${title}-${idx}`;
+              const checked = !!answers[styleKey]?.[item];
+              return (
+                <li key={id} className="trait">
+                  <input
+                    id={id}
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggle(styleKey, item)}
+                  />
+                  <label htmlFor={id}>{item}</label>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      );
+    }
+
+    function App() {
+      const emptyAnswers = useMemo(() => {
+        const base = {};
+        STYLES.forEach((s) => {
+          base[s.key] = {};
+          [...s.work, ...s.behavior].forEach((i) => { base[s.key][i] = false; });
         });
-        React.useEffect(() => { try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }, [key, state]);
-        return [state, setState];
-      }
+        return base;
+      }, []);
 
-      function Section({ title, items, styleKey, answers, onToggle }) {
-        const checkedCount = items.filter((i) => answers[styleKey]?.[i]).length;
-        return (
-          <div className="rounded-2xl border p-4 md:p-6 shadow-sm bg-white print:border-none print:shadow-none">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg md:text-xl font-semibold">{title}</h3>
-              <div className="text-sm md:text-base rounded-full px-3 py-1 border">{checkedCount} / {items.length}</div>
-            </div>
-            <ul className="mt-3 space-y-2">
-              {items.map((item, idx) => {
-                const id = `${styleKey}-${title}-${idx}`;
-                const checked = !!answers[styleKey]?.[item];
-                return (
-                  <li key={id} className="flex items-start gap-3">
-                    <input id={id} type="checkbox" className="mt-1 h-5 w-5 rounded border" checked={checked} onChange={() => onToggle(styleKey, item)} />
-                    <label htmlFor={id} className="select-none leading-relaxed cursor-pointer">{item}</label>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      }
+      const [answers, setAnswers] = usePersistentState(STORAGE_KEY, emptyAnswers);
 
-      function ScoreBar({ label, value, max }) {
-        const pct = max === 0 ? 0 : Math.round((value / max) * 100);
-        return (
-          <div>
-            <div className="flex justify-between text-sm font-medium"><span>{label}</span><span>{value} / {max}</span></div>
-            <div className="h-2 bg-gray-200 rounded-full mt-1"><div className="h-2 rounded-full" style={{ width: pct + '%' }}></div></div>
-          </div>
-        );
-      }
-
-      function App() {
-        const emptyAnswers = React.useMemo(() => {
-          const base = {};
-          STYLES.forEach((s) => {
-            base[s.key] = {};
-            [...s.work, ...s.behavior].forEach((i) => { base[s.key][i] = false; });
-          });
-          return base;
-        }, []);
-
-        const [answers, setAnswers] = usePersistentState(STORAGE_KEY, emptyAnswers);
-
-        const totals = React.useMemo(() => {
-          const t = { relator: { value: 0, max: 0 }, analyzer: { value: 0, max: 0 }, boss: { value: 0, max: 0 }, dreamer: { value: 0, max: 0 } };
-          STYLES.forEach((s) => {
-            const all = [...s.work, ...s.behavior];
-            const val = all.filter((i) => answers[s.key]?.[i]).length;
-            t[s.key] = { value: val, max: all.length };
-          });
-          return t;
-        }, [answers]);
-
-        const dominant = React.useMemo(() => {
-          const entries = Object.entries(totals);
-          const top = Math.max(...entries.map(([_, v]) => v.value));
-          return entries.filter(([_, v]) => v.value === top && top > 0).map(([k]) => k);
-        }, [totals]);
-
-        const handleToggle = (style, item) => {
-          setAnswers((prev) => ({ ...prev, [style]: { ...prev[style], [item]: !prev[style]?.[item] } }));
+      const totals = useMemo(() => {
+        const t = {
+          relator: { value: 0, max: 0 },
+          analyzer: { value: 0, max: 0 },
+          boss: { value: 0, max: 0 },
+          dreamer: { value: 0, max: 0 },
         };
+        STYLES.forEach((s) => {
+          const all = [...s.work, ...s.behavior];
+          const val = all.filter((i) => answers[s.key]?.[i]).length;
+          t[s.key] = { value: val, max: all.length };
+        });
+        return t;
+      }, [answers]);
 
-        const handleReset = () => setAnswers(emptyAnswers);
+      const dominant = useMemo(() => {
+        const entries = Object.entries(totals);
+        const top = Math.max(...entries.map(([_, v]) => v.value));
+        return entries.filter(([_, v]) => v.value === top && top > 0).map(([k]) => k);
+      }, [totals]);
 
-        const handleCopy = async () => {
-          const lines = STYLES.map((s) => {
-            const total = totals[s.key];
-            return `${s.title}: ${total.value} / ${total.max}`;
-          });
-          const text = lines.join("\n");
-          try { await navigator.clipboard.writeText(text); alert("Scores copied to clipboard."); } catch { alert(text); }
+      const handleToggle = (style, item) => {
+        setAnswers((prev) => ({
+          ...prev,
+          [style]: { ...prev[style], [item]: !prev[style]?.[item] }
+        }));
+      };
+
+      const handleReset = () => setAnswers(emptyAnswers);
+
+      const handleSavePDF = () => {
+        const element = document.querySelector("#pdf-root");
+        const opts = {
+          margin: 0.5,
+          filename: "Communication_Styles_Checklist.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
         };
+        html2pdf().from(element).set(opts).save();
+      };
 
-        const handleSavePDF = () => {
-          const element = document.querySelector("#pdf-root");
-          const opt = {
-            margin: 0.5,
-            filename: "Communication_Styles_Checklist.pdf",
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-          };
-          html2pdf().from(element).set(opt).save();
-        };
+      return (
+        <div className="container" id="pdf-root">
+          <h1>Communication Styles Interactive Checklist</h1>
+          <p className="lead muted">
+            Select the traits that fit you. Don’t overthink your responses. Skip anything that doesn’t resonate.
+            You may have almost all boxes checked in one section and only a few in another. You may find you have two sections that dominate.
+          </p>
 
-        return (
-          <div className="mx-auto max-w-5xl p-4 md:p-8 min-h-screen" id="pdf-root">
-            <header className="mb-6 md:mb-8 print:mb-2">
-              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">Communication Styles Interactive Checklist</h1>
-              <p className="mt-2 text-sm md:text-base text-gray-700 max-w-3xl">
-                Select the traits that fit you. Don’t overthink your responses. Skip anything that doesn’t resonate.
-                You may have almost all boxes checked in one section and only a few in another. You may find you have two sections that dominate.
-              </p>
-            </header>
-
-            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-6 print:hidden">
-              <button onClick={handleReset} className="px-4 py-2 rounded-2xl border shadow-sm">Reset</button>
-              <button onClick={handleCopy} className="px-4 py-2 rounded-2xl border shadow-sm">Copy Scores</button>
-              <button onClick={handleSavePDF} className="px-4 py-2 rounded-2xl border shadow-sm">Save as PDF</button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
-              {STYLES.map((s) => (
-                <div key={s.key}>
-                  <div className="mb-3">
-                    <h2 className="text-xl font-semibold">{s.title}</h2>
-                  </div>
-                  <Section title="Communication Style at Work" items={s.work} styleKey={s.key} answers={answers} onToggle={handleToggle} />
-                  <div className="h-4"></div>
-                  <Section title="Personality and Behaviors" items={s.behavior} styleKey={s.key} answers={answers} onToggle={handleToggle} />
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-2xl border p-4 md:p-6 bg-white shadow-sm">
-              <h2 className="text-xl md:text-2xl font-semibold">Your Results</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-4">
-                <ScoreBar label="Relator" value={totals.relator.value} max={totals.relator.max} />
-                <ScoreBar label="Analyzer" value={totals.analyzer.value} max={totals.analyzer.max} />
-                <ScoreBar label="Boss Driver" value={totals.boss.value} max={totals.boss.max} />
-                <ScoreBar label="Dreamer Motivator" value={totals.dreamer.value} max={totals.dreamer.max} />
-              </div>
-
-              <div className="mt-4 text-sm md:text-base">
-                <div className="font-medium">Dominant Styles:</div>
-                {dominant.length === 0 ? (
-                  <div className="text-gray-600">No selections yet.</div>
-                ) : (
-                  <ul className="list-disc list-inside">
-                    {dominant.map((d) => (<li key={d}>{STYLES.find((s) => s.key === d)?.title}</li>))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="mt-6 text-sm text-gray-700 print:mt-3">
-                After you save the PDF, email it to
-                <a href="mailto:laura@tahoetrainingpartners.com" className="underline ml-1">laura@tahoetrainingpartners.com</a>
-                and keep a copy for yourself.
-              </div>
-            </div>
-
-            <footer className="mt-8 text-xs text-gray-500 print:hidden">
-              Data stays on this device only (localStorage). Clear with Reset.
-            </footer>
+          <div className="controls no-print">
+            <button onClick={handleReset}>Reset</button>
+            <button onClick={handleSavePDF}>Save as PDF</button>
           </div>
-        );
-      }
 
-      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-    </script>
-  </body>
+          <div className="grid">
+            {STYLES.map((s) => (
+              <div key={s.key}>
+                <h2>{s.title}</h2>
+                <Section title="Communication Style at Work" items={s.work} styleKey={s.key} answers={answers} onToggle={handleToggle} />
+                <div style={{ height: 10 }}></div>
+                <Section title="Personality & Behaviors" items={s.behavior} styleKey={s.key} answers={answers} onToggle={handleToggle} />
+              </div>
+            ))}
+          </div>
+
+          <div className="results" style={{ marginTop: 16 }}>
+            <h2>Your Results</h2>
+            <div className="results-grid" style={{ marginTop: 8 }}>
+              <div className="scoreline"><span>Relator</span><span>{totals.relator.value} / {totals.relator.max}</span></div>
+              <div className="scoreline"><span>Analyzer</span><span>{totals.analyzer.value} / {totals.analyzer.max}</span></div>
+              <div className="scoreline"><span>Boss Driver</span><span>{totals.boss.value} / {totals.boss.max}</span></div>
+              <div className="scoreline"><span>Dreamer Motivator</span><span>{totals.dreamer.value} / {totals.dreamer.max}</span></div>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <strong>Dominant Styles:</strong>
+              {dominant.length === 0 ? (
+                <span className="muted"> No selections yet.</span>
+              ) : (
+                <ul style={{ margin: "6px 0 0 18px" }}>
+                  {dominant.map((d) => (
+                    <li key={d}>
+                      {STYLES.find((s) => s.key === d)?.title}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <footer>
+            Data stays on this device only (localStorage). Clear with Reset.
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
 </html>

@@ -90,9 +90,9 @@ label { cursor: pointer; }
     <label>First Name: <input id="firstName" type="text"></label>
     <label>Last Name: <input id="lastName" type="text"></label>
   </div>
-  <h1>Communication Styles Interactive Checklist</h1>
+  <h1>Communication Styles – Interactive Checklist</h1>
   <p class="lead">
-    Select the traits that fit you. Don’t overthink your responses. Skip anything that doesn’t resonate.
+    Select the traits that fit you. Don’t overthink your responses. Pass by anything that doesn’t resonate with you.
     You may have almost all boxes checked in one section and only a few in another. You may find you have two sections that dominate.
   </p>
   <div class="controls no-print">
@@ -105,7 +105,7 @@ label { cursor: pointer; }
 
 <script>
 const STYLES = [
-  {key:"relator",title:"Relator",work:[
+  {key:"relator",title:"Relator • Peacemaker",work:[
     "Seeks alignment between personal and organizational values.","Are excellent communicators.",
     "Makes people feel valued and cared for.","Creates a sense of community within an organization.",
     "Works well with staff members who support and cooperate with each other.","Has difficulty tolerating inconsiderate people.",
@@ -120,7 +120,7 @@ const STYLES = [
     "Waits for others to lead, then responds.","Pays attention to a speaker’s emotional tone and non-verbal communication.",
     "Energy: introverted, quiet."
   ]},
-  {key:"analyzer",title:"Analyzer",work:[
+  {key:"analyzer",title:"Analyzer • Truthkeeper",work:[
     "Seeks alignment between people and organizational procedures.","Works to enhance an organization’s reputation.",
     "Are rational and logical when working with people.","Gives people the information and knowledge they need.",
     "Are experts in their field.","Try to be as accurate as possible.","Works well with staff who follow through and are well-organized.",
@@ -133,7 +133,7 @@ const STYLES = [
     "Asks in-depth questions.","Needs time to think before responding.","Gathers all information before making a decision.",
     "May seem critical.","Pays attention to a speaker’s words and information.","Energy: introverted, reflective."
   ]},
-  {key:"boss",title:"Boss Driver",work:[
+  {key:"boss",title:"Boss • Driver",work:[
     "Seeks alignment between goals and output in an organization.","Works hard to make the organization productive.",
     "Are goal-oriented when working with people.","Gives people the product or skills they need.",
     "Can get a lot of things done in a short amount of time.","Works well with staff who are task-oriented and act quickly.",
@@ -143,12 +143,12 @@ const STYLES = [
   ],behavior:[
     "Strong, dominating.","Fast-paced, business-like, confident.","Directive tone of voice.","May seem controlling.",
     "Speech: sharp, quick, efficient.","Restless gestures and movement.","Leans forward to make a point.",
-    "Authoritative manner.","Makes statements more often than questions.","Talks about the bottom line.",
+    "Authoritative manner.","Makes statements more often than questions.","Talks about “the bottom line”.",
     "Solution-oriented and action-oriented.","Expects a response immediately.","May seem to override others.",
     "Uses achievement-oriented language.","Reacts immediately to a given situation.","Pays attention to a speaker’s words and action plan.",
     "Energy: extroverted, direct."
   ]},
-  {key:"dreamer",title:"Dreamer Motivator",work:[
+  {key:"dreamer",title:"Dreamer • Motivator",work:[
     "Seeks alignment between what is and what might be in an organization.","Explores possibilities when working with people.",
     "Makes people feel energized and excited.","Works well with staff who are quick both in thought and action.",
     "Are highly intuitive in making decisions.","Have difficulty tolerating people who can’t see what needs to be done.",
@@ -156,15 +156,13 @@ const STYLES = [
     "Are sometimes too scattered and volatile.","Communication strength is articulating the big picture and sharing the vision.",
     "Believes creativity is an organization’s best asset."
   ],behavior:[
-    "Outgoing, bubbly.","Enthusiastic, spontaneous, responsive.","Animated expressions (smiles, nods, frowns).",
+    "Outgoing, “bubbly”.","Enthusiastic, spontaneous, responsive.","Animated expressions (smiles, nods, frowns).",
     "Speech: colorful, dramatic.","Open gestures (e.g., hands free, palms up).","Friendly, fun manner.","May seem flighty and disorganized.",
     "Shares personal feelings freely.","Responds enthusiastically.","Wants collaboration and reactions from others.",
     "Paints pictures with words.","Uses intuition.","Tends to discount details as unnecessary.",
     "Frequent eye-contact while listening.","Pays attention to a speaker’s emotional energy while listening.","Energy: extroverted, excited."
   ]}
 ];
-
-const answers = {};
 
 function renderChecklist() {
   const container = document.getElementById("sections");
@@ -177,13 +175,12 @@ function renderChecklist() {
     grid.style.display = "grid";
     grid.style.gridTemplateColumns = "1fr 1fr";
     grid.style.gap = "16px";
-    [ ["Communication Style at Work", style.work],
-      ["Personality & Behaviors", style.behavior]
+    [["COMMUNICATION STYLE AT WORK", style.work],
+     ["PERSONALITY & BEHAVIORS", style.behavior]
     ].forEach(([title, items])=>{
       const card = document.createElement("div");
       card.className = "card";
-      const count = document.createElement("div");
-      count.style.textAlign = "right";
+      card.innerHTML = `<h3>${title}</h3>`;
       const list = document.createElement("ul");
       list.className = "list";
       items.forEach((item, idx)=>{
@@ -192,14 +189,13 @@ function renderChecklist() {
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.id = `${style.key}-${idx}`;
-        cb.addEventListener("change", ()=>updateResults());
+        cb.addEventListener("change", updateResults);
         const label = document.createElement("label");
         label.setAttribute("for", cb.id);
         label.textContent = item;
         li.append(cb, label);
         list.appendChild(li);
       });
-      card.appendChild(document.createElement("h3")).textContent = title;
       card.appendChild(list);
       grid.appendChild(card);
     });
@@ -217,10 +213,10 @@ function updateResults() {
   });
   const results = document.getElementById("results");
   results.innerHTML = `<div class='section-title' style='margin-top:0'>Your Results</div>
-    <div class='scoreline'><span>Relator</span><span>${totals.relator}/25</span></div>
-    <div class='scoreline'><span>Analyzer</span><span>${totals.analyzer}/33</span></div>
-    <div class='scoreline'><span>Boss Driver</span><span>${totals.boss}/29</span></div>
-    <div class='scoreline'><span>Dreamer Motivator</span><span>${totals.dreamer}/28</span></div>`;
+    <div class='scoreline'><span>Relator</span><span>${totals.relator||0}</span></div>
+    <div class='scoreline'><span>Analyzer</span><span>${totals.analyzer||0}</span></div>
+    <div class='scoreline'><span>Boss</span><span>${totals.boss||0}</span></div>
+    <div class='scoreline'><span>Dreamer</span><span>${totals.dreamer||0}</span></div>`;
 }
 
 document.getElementById("resetBtn").addEventListener("click", ()=>{

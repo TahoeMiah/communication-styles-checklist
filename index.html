@@ -25,33 +25,34 @@ h1 { font-size: 28px; margin-bottom: 12px; }
 p.lead { color: var(--muted); font-size: 15px; margin-bottom: 18px; }
 input[type="text"] {
   border: 2px solid var(--blue);
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 16px;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 18px;
   font-weight: bold;
-  width: 220px;
+  width: 280px;
   color: var(--text);
 }
 .name-fields {
   display: flex;
-  gap: 20px;
-  margin-bottom: 18px;
+  gap: 24px;
+  margin: 26px 0;
   align-items: center;
+  justify-content: flex-start;
 }
 .name-fields label {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   color: var(--blue);
 }
-.controls { display: flex; gap: 10px; margin-bottom: 18px; }
+.controls { display: flex; gap: 10px; margin-bottom: 10px; }
 button {
   appearance: none;
   border: 1px solid var(--border);
   background: white;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 button:hover { background: #f0f0f0; }
@@ -99,14 +100,14 @@ label { cursor: pointer; }
     You may have almost all boxes checked in one section and only a few in another. You may find you have two sections that dominate.
   </p>
 
-  <div class="name-fields no-print">
-    <label>First Name: <input id="firstName" type="text" placeholder="First Name"></label>
-    <label>Last Name: <input id="lastName" type="text" placeholder="Last Name"></label>
-  </div>
-
   <div class="controls no-print">
     <button id="resetBtn">Clear All</button>
     <button id="saveBtn">Make PDF</button>
+  </div>
+
+  <div class="name-fields">
+    <label>First Name: <input id="firstName" type="text" placeholder="First Name"></label>
+    <label>Last Name: <input id="lastName" type="text" placeholder="Last Name"></label>
   </div>
 
   <div id="sections"></div>

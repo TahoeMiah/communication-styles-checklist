@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Communication Styles Interactive Checklist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      body {
+        background: #f9fafb;
+        color: #111827;
+        font-family: system-ui, sans-serif;
+      }
+      @media print {
+        .print\\:hidden {
+          display: none !important;
+        }
+        .print\\:border-none {
+          border: none !important;
+        }
+        .print\\:shadow-none {
+          box-shadow: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect, useMemo } = React;
+
+      const STYLES = [
+        {
+          key: "relator",
+          title: "Relator",
+          work: [
+            "Seeks alignment between personal and organizational values.",
+            "Are excellent communicators.",
+            "Makes people feel valued and cared for.",
+            "Creates a sense of community within an organization.",
+            "Works well with staff members who support and cooperate with each other.",
+            "Has difficulty tolerating inconsiderate people.",
+            "Likes making a personal connection with people.",
+            "Strives to bring harmony to any situation.",
+            "Will focus on feelings first.",
+            "Are sometimes too sensitive and worry about what other people will think of them.",
+            "Communication strength is active listening.",
+            "Believes people are an organization’s best asset.",
+          ],
+          behavior: [
+            "Easy-going, placid, amiable.",
+            "Steady, reserved, low-key.",
+            "Limited gestures, smooth and gentle.",
+            "Eyes sometimes averted while listening attentively.",
+            "Accepting, observant manner — indirect.",
+            "Uses feeling language.",
+            "Talks about personal experiences.",
+            "Speech: slow, liquid, tentative; uses questioning tone in statements.",
+            "May seem vague and unclear about what is wanted.",
+            "Tends to lean away from the speaker.",
+            "Waits for others to lead, then responds.",
+            "Pays attention to a speaker’s emotional tone and non-verbal communication.",
+            "Energy: introverted, quiet.",
+          ],
+        },
+      ];
+
+      const STORAGE_KEY = "comm-style-checklist";
+
+      const usePersistentState = (key, initial) => {
+        const [state, setState] = useState(() => {
+          try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : initial;
+          } catch {
+            return initial;
+          }
+        });
+        useEffect(() => {
+          try {
+            localStorage.setItem(key, JSON.stringify(state));
+          } catch {}
+        }, [state]);
+        return [state, setState];
+      };
+
+      const Section = ({ title, items, styleKey, answers, onToggle }) => {
+        const checkedCount = items.filter((i) => answers[styleKey]?.[i]).length;
+        return (
+          <div className="rounded-2xl border p-4 md:p-6 shadow-sm bg-white print:border-none print:shadow-none">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">{title}</h3>
+              <div className="text-sm rounded-full px-3 py-1 border">
+                {checkedCount} / {items.length}
+              </div>
+            </div>
+            <ul className="mt-3 space-y-2">
+              {items.map((item, idx) => {
+                const id = `${styleKey}-${title}-${idx}`;
+                const checked = !!answers[styleKey]?.[item];
+                return (
+                  <li key={id} className="flex items-start gap-3">
+                    <input
+                      id={id}
+                      type="checkbox"
+                      className="mt-1 h-5 w-5 rounded border"
+                      checked={checked}
+                      onChange={() => onToggle(styleKey, item)}
+                    />
+                    <label htmlFor={id} className="leading-relaxed cursor-pointer">
+                      {item}
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      };
+
+      const App = () => {
+        const emptyAnswers = useMemo(() => {
+          const base = {};
+          STYLES.forEach((s) => {
+            base[s.key] = {};
+            [...s.work, ...s.behavior].forEach((i) => (base[s.key][i] = false));
+          });
+          return base;
+        }, []);
+
+        const [answers, setAnswers] = usePersistentState(STORAGE_KEY, emptyAnswers);
+
+        const handleToggle = (style, item) => {
+          setAnswers((prev) => ({
+            ...prev,
+            [style]: {
+              ...prev[style],
+              [item]: !prev[style]?.[item],
+            },
+          }));
+        };
+
+        const handleReset = () => setAnswers(emptyAnswers);
+
+        const handleSavePDF = () => {
+          const element = document.querySelector("#pdf-area");
+          const opt = {
+            margin: 0.5,
+            filename: "Communication_Styles_Checklist.pdf",
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+          };
+          html2pdf().from(element).set(opt).save();
+        };
+
+        return (
+          <div className="max-w-3xl mx-auto p-4 md:p-8" id="pdf-area">
+            <h1 className="text-2xl font-bold mb-4">
+              Communication Styles Interactive Checklist
+            </h1>
+            <div className="mb-4 flex gap-2 print:hidden">
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 border rounded-lg shadow-sm"
+              >
+                Reset
+              </button>
+              <button
+                onClick={handleSavePDF}
+                className="px-4 py-2 border rounded-lg shadow-sm"
+              >
+                Save as PDF
+              </button>
+            </div>
+
+            {STYLES.map((s) => (
+              <div key={s.key}>
+                <h2 className="text-xl font-semibold mb-2">{s.title}</h2>
+                <Section
+                  title="Communication Style at Work"
+                  items={s.work}
+                  styleKey={s.key}
+                  answers={answers}
+                  onToggle={handleToggle}
+                />
+                <div className="h-4" />
+                <Section
+                  title="Personality & Behaviors"
+                  items={s.behavior}
+                  styleKey={s.key}
+                  answers={answers}
+                  onToggle={handleToggle}
+                />
+              </div>
+            ))}
+
+            <div className="mt-6 text-sm text-gray-700 print:hidden">
+              After saving your PDF, email it to
+              <a href="mailto:laura@tahoetrainingpartners.com" className="underline ml-1">
+                laura@tahoetrainingpartners.com
+              </a>
+            </div>
+          </div>
+        );
+      };
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
